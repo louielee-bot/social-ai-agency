@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Social Agency</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: #2a2a3a;
+    --text: #f0f0f8;
+    --muted: #7070a0;
+    --accent: #7c6fff;
+    --accent2: #ff6f91;
+
+    --fb: #1877f2;
+    --ig: #e1306c;
+    --li: #0a66c2;
+    --yt: #ff0000;
+    --tt: #69c9d0;
+    --tw: #1da1f2;
+
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ANIMATED BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 20% 20%, #7c6fff18 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, #ff6f9118 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, #1877f208 0%, transparent 60%);
+    animation: bgPulse 8s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes bgPulse {
+    0% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1.1) rotate(3deg); }
+  }
+
+  .app { position: relative; z-index: 1; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ── SETUP SCREEN ── */
+  #setup {
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .tagline {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 36px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .setup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 420px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .setup-card h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  select option { background: var(--surface2); }
+
+  .api-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .api-row input { margin-bottom: 0; flex: 1; }
+
+  .btn {
+    background: linear-gradient(135deg, var(--accent), #5a4fff);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px 20px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 4px;
+  }
+
+  .btn:active { transform: scale(0.98); opacity: 0.9; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn.secondary {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn.sm {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    width: auto;
+  }
+
+  /* ── MAIN APP ── */
+  #main { background: var(--bg); }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .top-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .brand-name-tag {
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .settings-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  /* PLATFORM TABS */
+  .platform-tabs {
+    display: flex;
+    overflow-x: auto;
+    padding: 16px 20px 0;
+    gap: 10px;
+    scrollbar-width: none;
+  }
+
+  .platform-tabs::-webkit-scrollbar { display: none; }
+
+  .platform-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 64px;
+    cursor: pointer;
+    padding-bottom: 12px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .platform-tab.active { border-bottom-color: var(--accent); }
+
+  .platform-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+  }
+
+  .platform-tab:active .platform-icon { transform: scale(0.92); }
+
+  .platform-tab span {
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .platform-tab.active span { color: var(--accent); }
+
+  /* SPECIALIST GRID */
+  .content-area { padding: 20px; }
+
+  .section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .specialists-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .specialist-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .specialist-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .specialist-card:active { transform: scale(0.97); }
+  .specialist-card:hover::before { opacity: 1; }
+
+  .specialist-icon { font-size: 1.6rem; margin-bottom: 8px; }
+
+  .specialist-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .specialist-desc {
+    font-size: 0.7rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* CHAT SCREEN */
+  #chat {
+    display: none;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  #chat.active { display: flex; }
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+  }
+
+  .chat-header-info { flex: 1; }
+
+  .chat-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .chat-subtitle {
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .specialist-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .message {
+    max-width: 88%;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .message.user { align-self: flex-end; }
+  .message.ai { align-self: flex-start; }
+
+  .message-bubble {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .message.user .message-bubble {
+    background: linear-gradient(135deg, var(--accent), #5a4fff);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.ai .message-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+
+  .message-meta {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+
+  .message.user .message-meta { text-align: right; }
+
+  /* TYPING INDICATOR */
+  .typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    width: fit-content;
+  }
+
+  .typing span {
+    width: 6px;
+    height: 6px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: bounce 1.2s ease infinite;
+  }
+
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  /* COPY BUTTON */
+  .copy-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .copy-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* INPUT BAR */
+  .input-bar {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .input-bar textarea {
+    flex: 1;
+    margin: 0;
+    min-height: 44px;
+    max-height: 120px;
+    border-radius: 22px;
+    padding: 11px 16px;
+    font-size: 0.9rem;
+    resize: none;
+  }
+
+  .send-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    background: linear-gradient(135deg, var(--accent), #5a4fff);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+
+  .send-btn:active { transform: scale(0.92); }
+  .send-btn:disabled { opacity: 0.4; }
+
+  /* QUICK PROMPTS */
+  .quick-prompts {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 16px 4px;
+    scrollbar-width: none;
+  }
+
+  .quick-prompts::-webkit-scrollbar { display: none; }
+
+  .quick-prompt {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s;
+  }
+
+  .quick-prompt:hover { border-color: var(--accent); }
+
+  /* HISTORY / IMPROVEMENTS */
+  .improvements-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .improvements-section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .improvement-item {
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.5;
+  }
+
+  .improvement-item:last-child { border-bottom: none; }
+
+  /* SETTINGS PANEL */
+  #settings-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000a;
+    z-index: 200;
+    align-items: flex-end;
+  }
+
+  #settings-panel.open { display: flex; }
+
+  .settings-sheet {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px;
+    width: 100%;
+    animation: slideUp 0.3s ease;
+  }
+
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 24px;
+  }
+
+  .settings-sheet h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* PLATFORM COLOURS */
+  .fb { background: #1877f222; color: var(--fb); }
+  .ig { background: linear-gradient(135deg, #f0900222, #e1306c22); color: var(--ig); }
+  .li { background: #0a66c222; color: var(--li); }
+  .yt { background: #ff000022; color: var(--yt); }
+  .tt { background: #69c9d022; color: var(--tt); }
+  .tw { background: #1da1f222; color: var(--tw); }
+
+  .fb-accent::before { background: var(--fb); }
+  .ig-accent::before { background: linear-gradient(135deg, #f09002, var(--ig)); }
+  .li-accent::before { background: var(--li); }
+  .yt-accent::before { background: var(--yt); }
+  .tt-accent::before { background: var(--tt); }
+  .tw-accent::before { background: var(--tw); }
+
+  /* ONBOARDING COMPLETE BADGE */
+  .done-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #22c55e22;
+    color: #22c55e;
+    border: 1px solid #22c55e44;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+
+  .error-msg {
+    color: #ff6b6b;
+    font-size: 0.8rem;
+    margin-top: -10px;
+    margin-bottom: 12px;
+  }
+
+  /* SCROLLBAR */
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (min-width: 500px) {
+    .specialists-grid { grid-template-columns: 1fr 1fr 1fr; }
+    #setup { padding: 40px 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 1: SETUP
+  ═══════════════════════════════════════════ -->
+  <div class="screen active" id="setup">
+    <div class="logo">AI Social Agency</div>
+    <div class="tagline">Your full social media team, powered by AI</div>
+
+    <div class="setup-card">
+      <h2>⚡ Let's set up your agency</h2>
+
+      <label>Your Gemini API Key</label>
+      <div class="api-row">
+        <input type="password" id="api-key" placeholder="AIzaSy..." autocomplete="off">
+      </div>
+      <p style="font-size:0.72rem;color:var(--muted);margin-bottom:16px;margin-top:-10px;">
+        Get free key at <strong>aistudio.google.com</strong> → Get API key
+      </p>
+
+      <label>Brand / Business Name</label>
+      <input type="text" id="brand-name" placeholder="e.g. Louie's Bakery">
+
+      <label>What do you do? (1–2 sentences)</label>
+      <textarea id="brand-desc" placeholder="e.g. We sell handmade artisan breads and pastries in Manchester, UK. We're known for our sourdough and seasonal specials."></textarea>
+
+      <label>Your Target Audience</label>
+      <input type="text" id="brand-audience" placeholder="e.g. Food lovers, families, 25–45, local area">
+
+      <label>Brand Tone / Personality</label>
+      <select id="brand-tone">
+        <option value="">Choose a tone...</option>
+        <option value="warm and friendly">Warm & Friendly</option>
+        <option value="professional and authoritative">Professional & Authoritative</option>
+        <option value="fun and playful">Fun & Playful</option>
+        <option value="inspirational and motivating">Inspirational & Motivating</option>
+        <option value="luxury and premium">Luxury & Premium</option>
+        <option value="casual and conversational">Casual & Conversational</option>
+        <option value="educational and informative">Educational & Informative</option>
+        <option value="bold and edgy">Bold & Edgy</option>
+      </select>
+
+      <label>Main Goal</label>
+      <select id="brand-goal">
+        <option value="">Choose a goal...</option>
+        <option value="grow brand awareness">Grow Brand Awareness</option>
+        <option value="drive sales and conversions">Drive Sales & Conversions</option>
+        <option value="build a community">Build a Community</option>
+        <option value="generate leads">Generate Leads</option>
+        <option value="establish thought leadership">Establish Thought Leadership</option>
+        <option value="promote events">Promote Events</option>
+      </select>
+
+      <div id="setup-error" class="error-msg" style="display:none"></div>
+      <button class="btn" onclick="startApp()">Launch My Agency 🚀</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 2: MAIN DASHBOARD
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="main">
+    <div class="top-bar">
+      <div class="top-logo">AI Social Agency</div>
+      <span class="brand-name-tag" id="brand-tag">My Brand</span>
+      <button class="settings-btn" onclick="openSettings()">⚙️</button>
+    </div>
+
+    <!-- PLATFORM TABS -->
+    <div class="platform-tabs" id="platform-tabs">
+      <div class="platform-tab active" onclick="selectPlatform('facebook',this)">
+        <div class="platform-icon fb">🔵</div>
+        <span>Facebook</span>
+      </div>
+      <div class="platform-tab" onclick="selectPlatform('instagram',this)">
+        <div class="platform-icon ig">📸</div>
+        <span>Instagram</span>
+      </div>
+      <div class="platform-tab" onclick="selectPlatform('linkedin',this)">
+        <div class="platform-icon li">💼</div>
+        <span>LinkedIn</span>
+      </div>
+      <div class="platform-tab" onclick="selectPlatform('youtube',this)">
+        <div class="platform-icon yt">▶️</div>
+        <span>YouTube</span>
+      </div>
+      <div class="platform-tab" onclick="selectPlatform('tiktok',this)">
+        <div class="platform-icon tt">🎵</div>
+        <span>TikTok</span>
+      </div>
+      <div class="platform-tab" onclick="selectPlatform('twitter',this)">
+        <div class="platform-icon tw">🐦</div>
+        <span>X / Twitter</span>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <!-- IMPROVEMENTS (self-learning) -->
+      <div class="improvements-section" id="improvements-section" style="display:none">
+        <h3>🧠 What Your AI Has Learned <span class="done-badge">✓ Self-Improving</span></h3>
+        <div id="improvements-list"></div>
+      </div>
+
+      <div class="section-label" id="platform-label">FACEBOOK — Choose Your Specialist</div>
+
+      <div class="specialists-grid" id="specialists-grid">
+        <!-- filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 3: CHAT
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="chat">
+    <div class="chat-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <div class="chat-header-info">
+        <div class="chat-title" id="chat-title">Brand Strategist</div>
+        <div class="chat-subtitle" id="chat-subtitle">Facebook · AI Specialist</div>
+      </div>
+      <div class="specialist-badge" id="chat-badge"></div>
+    </div>
+
+    <div class="quick-prompts" id="quick-prompts"></div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input-bar">
+      <textarea id="user-input" placeholder="Ask your specialist…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SETTINGS PANEL
+  ═══════════════════════════════════════════ -->
+  <div id="settings-panel" onclick="closeSettingsOutside(event)">
+    <div class="settings-sheet">
+      <div class="sheet-handle"></div>
+      <h2>⚙️ Settings</h2>
+
+      <label>Gemini API Key</label>
+      <input type="password" id="settings-api-key" placeholder="AIzaSy...">
+
+      <label>Brand Name</label>
+      <input type="text" id="settings-brand-name">
+
+      <label>Brand Description</label>
+      <textarea id="settings-brand-desc"></textarea>
+
+      <label>Target Audience</label>
+      <input type="text" id="settings-audience">
+
+      <label>Tone</label>
+      <select id="settings-tone">
+        <option value="warm and friendly">Warm & Friendly</option>
+        <option value="professional and authoritative">Professional & Authoritative</option>
+        <option value="fun and playful">Fun & Playful</option>
+        <option value="inspirational and motivating">Inspirational & Motivating</option>
+        <option value="luxury and premium">Luxury & Premium</option>
+        <option value="casual and conversational">Casual & Conversational</option>
+        <option value="educational and informative">Educational & Informative</option>
+        <option value="bold and edgy">Bold & Edgy</option>
+      </select>
+
+      <label>Main Goal</label>
+      <select id="settings-goal">
+        <option value="grow brand awareness">Grow Brand Awareness</option>
+        <option value="drive sales and conversions">Drive Sales & Conversions</option>
+        <option value="build a community">Build a Community</option>
+        <option value="generate leads">Generate Leads</option>
+        <option value="establish thought leadership">Establish Thought Leadership</option>
+        <option value="promote events">Promote Events</option>
+      </select>
+
+      <button class="btn" onclick="saveSettings()" style="margin-bottom:10px">Save Changes</button>
+      <button class="btn secondary" onclick="closeSettings()">Cancel</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let state = {
+  apiKey: '',
+  brand: { name: '', desc: '', audience: '', tone: '', goal: '' },
+  currentPlatform: 'facebook',
+  currentSpecialist: null,
+  conversation: [],
+  improvements: {}   // platform → array of strings
+};
+
+// ══════════════════════════════════════════════
+//  PLATFORM & SPECIALIST CONFIG
+// ══════════════════════════════════════════════
+const PLATFORMS = {
+  facebook:  { label: 'Facebook',   emoji: '🔵', cls: 'fb', color: '#1877f2' },
+  instagram: { label: 'Instagram',  emoji: '📸', cls: 'ig', color: '#e1306c' },
+  linkedin:  { label: 'LinkedIn',   emoji: '💼', cls: 'li', color: '#0a66c2' },
+  youtube:   { label: 'YouTube',    emoji: '▶️', cls: 'yt', color: '#ff0000' },
+  tiktok:    { label: 'TikTok',     emoji: '🎵', cls: 'tt', color: '#69c9d0' },
+  twitter:   { label: 'X/Twitter',  emoji: '🐦', cls: 'tw', color: '#1da1f2' }
+};
+
+const SPECIALISTS = [
+  {
+    id: 'strategist',
+    name: 'Brand Strategist',
+    emoji: '🎯',
+    desc: 'Positioning, goals & brand identity',
+    prompts: {
+      facebook:  ['Define my Facebook strategy','Best posting times for my audience','How to grow my page organically'],
+      instagram: ['Define my Instagram strategy','Best reel ideas for my brand','How to grow my following'],
+      linkedin:  ['Define my LinkedIn strategy','How to build thought leadership','B2B content ideas'],
+      youtube:   ['Define my YouTube strategy','Channel growth tactics','Video topic ideas'],
+      tiktok:    ['Define my TikTok strategy','Trending content formats for me','How to go viral'],
+      twitter:   ['Define my X/Twitter strategy','Best tweet formats for my brand','How to build engagement']
+    },
+    systemPrompt: (p, b) => `You are an expert ${p.label} Brand Strategist and social media consultant. 
+Your client: "${b.name}" — ${b.desc}
+Target audience: ${b.audience}
+Brand tone: ${b.tone}
+Main goal: ${b.goal}
+
+You provide sharp, specific, actionable ${p.label} strategy advice tailored to their exact business. 
+Be direct, insightful, and practical. Use emojis sparingly. Format with clear structure when helpful.`
+  },
+  {
+    id: 'planner',
+    name: 'Content Planner',
+    emoji: '📅',
+    desc: 'Monthly calendars & content schedules',
+    prompts: {
+      facebook:  ['Create my monthly content calendar','Post frequency recommendations','Content pillars for my brand'],
+      instagram: ['Create my monthly IG calendar','Story vs feed balance','Content pillars for Instagram'],
+      linkedin:  ['Create my LinkedIn content plan','Weekly posting schedule','Content mix for professionals'],
+      youtube:   ['Create my YouTube upload schedule','Video series ideas','Content calendar for 30 days'],
+      tiktok:    ['Create my TikTok posting plan','Daily content ideas for a week','Trending challenges to join'],
+      twitter:   ['Create my Twitter/X posting plan','Tweet types to mix','Engagement strategy calendar']
+    },
+    systemPrompt: (p, b) => `You are an expert ${p.label} Content Planner and social media strategist.
+Your client: "${b.name}" — ${b.desc}
+Target audience: ${b.audience}
+Brand tone: ${b.tone}
+Main goal: ${b.goal}
+
+Create detailed, realistic ${p.label} content calendars and plans. Include specific post ideas, timing, content types and themes.
+Output structured plans with days/weeks clearly organised. Be specific to their industry and audience.`
+  },
+  {
+    id: 'copywriter',
+    name: 'Copywriter',
+    emoji: '✍️',
+    desc: 'Captions, hooks & hashtags',
+    prompts: {
+      facebook:  ['Write 5 Facebook posts for this week','Give me 10 post hooks','Write a promotional post'],
+      instagram: ['Write 5 Instagram captions','Give me 10 caption hooks','Write a reel caption with hashtags'],
+      linkedin:  ['Write a LinkedIn article intro','Write 3 professional posts','Create a thought leadership post'],
+      youtube:   ['Write a YouTube description','Write a video script intro','Create video titles for my channel'],
+      tiktok:    ['Write TikTok captions','Give me 10 TikTok hook ideas','Script a 30-second TikTok'],
+      twitter:   ['Write 10 tweets for my brand','Give me viral tweet formats','Write a Twitter thread']
+    },
+    systemPrompt: (p, b) => `You are an elite ${p.label} Copywriter who writes scroll-stopping social media content.
+Your client: "${b.name}" — ${b.desc}
+Target audience: ${b.audience}
+Brand tone: ${b.tone}
+Main goal: ${b.goal}
+
+Write compelling, on-brand ${p.label} copy. Understand the platform's unique style:
+- Facebook: conversational, community-focused, medium length, stories work well
+- Instagram: visual-first, punchy captions, strong hooks, relevant hashtags (15–20)
+- LinkedIn: professional, value-driven, longer form, no hashtag spam (3–5 max)
+- YouTube: SEO-rich descriptions, clear value proposition, timestamps for long videos
+- TikTok: ultra-casual, trend-aware, short punchy text, 3–5 hashtags
+- X/Twitter: concise, witty, hook in first line, threads for depth
+
+Always write ready-to-post content unless asked otherwise. Include relevant hashtags for the platform.`
+  },
+  {
+    id: 'designer',
+    name: 'Creative Director',
+    emoji: '🎨',
+    desc: 'Visual concepts & creative direction',
+    prompts: {
+      facebook:  ['Describe visuals for my next 5 posts','Facebook ad creative concepts','Banner and cover image ideas'],
+      instagram: ['Instagram grid aesthetic ideas','Reel visual concepts','Story template ideas'],
+      linkedin:  ['LinkedIn banner ideas','Visual content for professionals','Infographic concepts'],
+      youtube:   ['YouTube thumbnail concepts','Channel art ideas','Video intro/outro suggestions'],
+      tiktok:    ['TikTok video concept ideas','On-screen text and effects ideas','TikTok series visual format'],
+      twitter:   ['Twitter header image ideas','Tweet image/graphic concepts','Visual thread ideas']
+    },
+    systemPrompt: (p, b) => `You are a Creative Director specialising in ${p.label} visual content.
+Your client: "${b.name}" — ${b.desc}
+Target audience: ${b.audience}
+Brand tone: ${b.tone}
+Main goal: ${b.goal}
+
+Provide detailed visual content direction for ${p.label}. Describe:
+- Exactly what should be in each visual (colours, composition, mood, style)
+- Text overlays and typography suggestions
+- What makes it scroll-stopping
+- Tools they can use (Canva templates, CapCut, etc.) with specific tips
+
+Be vivid and specific. They need to be able to create this from your description.`
+  },
+  {
+    id: 'analyst',
+    name: 'Analyst',
+    emoji: '📊',
+    desc: 'Performance review & self-improvement',
+    prompts: {
+      facebook:  ['Review my Facebook performance','What metrics matter most','How to improve my reach'],
+      instagram: ['Review my Instagram insights','Analyse my engagement rate','What content is working best'],
+      linkedin:  ['Review my LinkedIn analytics','Improve my post impressions','What content gets most engagement'],
+      youtube:   ['Review my YouTube analytics','Improve my watch time','What makes people click my videos'],
+      tiktok:    ['Review my TikTok performance','Improve my video completion rate','What hooks are working'],
+      twitter:   ['Review my Twitter/X analytics','Improve my engagement rate','What tweet types perform best']
+    },
+    systemPrompt: (p, b) => `You are a ${p.label} Performance Analyst and data-driven social media strategist.
+Your client: "${b.name}" — ${b.desc}
+Target audience: ${b.audience}
+Brand tone: ${b.tone}
+Main goal: ${b.goal}
+
+Analyse ${p.label} performance and provide actionable recommendations. When the user shares their stats:
+1. Identify what's working and why
+2. Identify what's underperforming and why
+3. Give 3–5 specific, prioritised recommendations
+4. Suggest what to do MORE of and what to STOP doing
+5. Extract key LESSONS that should inform next month's content
+
+Always end your analysis with a section: "🧠 KEY LEARNINGS FOR NEXT MONTH:" listing 3 bullet points.
+These will be saved to improve future content for this brand.`
+  }
+];
+
+// ══════════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════════
+function startApp() {
+  const key = document.getElementById('api-key').value.trim();
+  const name = document.getElementById('brand-name').value.trim();
+  const desc = document.getElementById('brand-desc').value.trim();
+  const audience = document.getElementById('brand-audience').value.trim();
+  const tone = document.getElementById('brand-tone').value;
+  const goal = document.getElementById('brand-goal').value;
+  const err = document.getElementById('setup-error');
+
+  if (!key) { showError(err, 'Please enter your Gemini API key'); return; }
+  if (!name) { showError(err, 'Please enter your brand name'); return; }
+  if (!desc) { showError(err, 'Please describe your business'); return; }
+  if (!audience) { showError(err, 'Please enter your target audience'); return; }
+  if (!tone) { showError(err, 'Please select your brand tone'); return; }
+  if (!goal) { showError(err, 'Please select your main goal'); return; }
+
+  err.style.display = 'none';
+  state.apiKey = key;
+  state.brand = { name, desc, audience, tone, goal };
+
+  document.getElementById('brand-tag').textContent = name;
+  selectPlatform('facebook', document.querySelector('.platform-tab'));
+  showScreen('main');
+  renderSpecialists();
+}
+
+function showError(el, msg) {
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════
+//  PLATFORM SELECTION
+// ══════════════════════════════════════════════
+function selectPlatform(platform, el) {
+  state.currentPlatform = platform;
+  document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('platform-label').textContent =
+    `${PLATFORMS[platform].label.toUpperCase()} — Choose Your Specialist`;
+  renderSpecialists();
+  renderImprovements();
+}
+
+// ══════════════════════════════════════════════
+//  SPECIALISTS GRID
+// ══════════════════════════════════════════════
+function renderSpecialists() {
+  const p = state.currentPlatform;
+  const cls = PLATFORMS[p].cls;
+  const grid = document.getElementById('specialists-grid');
+  grid.innerHTML = SPECIALISTS.map(s => `
+    <div class="specialist-card ${cls}-accent" onclick="openChat('${s.id}')">
+      <div class="specialist-icon">${s.emoji}</div>
+      <div class="specialist-name">${s.name}</div>
+      <div class="specialist-desc">${s.desc}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+//  IMPROVEMENTS (self-learning)
+// ══════════════════════════════════════════════
+function renderImprovements() {
+  const p = state.currentPlatform;
+  const list = state.improvements[p];
+  const section = document.getElementById('improvements-section');
+  const el = document.getElementById('improvements-list');
+
+  if (!list || list.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  el.innerHTML = list.map(i => `<div class="improvement-item">• ${i}</div>`).join('');
+}
+
+function saveImprovement(text) {
+  const p = state.currentPlatform;
+  if (!state.improvements[p]) state.improvements[p] = [];
+  // Extract bullet points after "KEY LEARNINGS"
+  const lines = text.split('\n');
+  let capture = false;
+  lines.forEach(line => {
+    if (line.includes('KEY LEARNINGS')) { capture = true; return; }
+    if (capture && line.trim().startsWith('•') || (capture && line.trim().startsWith('-'))) {
+      const clean = line.replace(/^[•\-\*]\s*/, '').trim();
+      if (clean.length > 10) state.improvements[p].push(clean);
+    }
+  });
+  renderImprovements();
+}
+
+// ══════════════════════════════════════════════
+//  CHAT
+// ══════════════════════════════════════════════
+function openChat(specialistId) {
+  const specialist = SPECIALISTS.find(s => s.id === specialistId);
+  const platform = PLATFORMS[state.currentPlatform];
+  state.currentSpecialist = specialist;
+  state.conversation = [];
+
+  document.getElementById('chat-title').textContent = specialist.name;
+  document.getElementById('chat-subtitle').textContent = `${platform.label} · AI Specialist`;
+  document.getElementById('chat-badge').textContent = specialist.emoji;
+  document.getElementById('chat-badge').style.background = platform.color + '33';
+
+  // Quick prompts
+  const prompts = specialist.prompts[state.currentPlatform] || [];
+  document.getElementById('quick-prompts').innerHTML = prompts.map(p =>
+    `<div class="quick-prompt" onclick="useQuickPrompt('${p.replace(/'/g,"\\'")}')">⚡ ${p}</div>`
+  ).join('');
+
+  // Clear messages and add greeting
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = '';
+
+  const improvements = state.improvements[state.currentPlatform];
+  let greeting = `Hi! I'm your ${platform.label} ${specialist.name} for **${state.brand.name}**.\n\nI know your brand inside out — ${state.brand.tone} tone, targeting ${state.brand.audience}, with a goal to ${state.brand.goal}.\n\nWhat would you like to work on today?`;
+
+  if (improvements && improvements.length > 0 && specialistId !== 'analyst') {
+    greeting += `\n\n🧠 I've also loaded ${improvements.length} learnings from your previous performance reviews to make my output even sharper.`;
+  }
+
+  addMessage('ai', greeting);
+  showScreen('chat');
+  document.getElementById('user-input').focus();
+}
+
+function useQuickPrompt(text) {
+  document.getElementById('user-input').value = text;
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  autoResize(input);
+
+  addMessage('user', text);
+  state.conversation.push({ role: 'user', content: text });
+
+  const sendBtn = document.getElementById('send-btn');
+  sendBtn.disabled = true;
+
+  const typingEl = addTyping();
+
+  try {
+    const platform = PLATFORMS[state.currentPlatform];
+    const specialist = state.currentSpecialist;
+
+    // Build context with improvements
+    const improvements = state.improvements[state.currentPlatform];
+    let systemPrompt = specialist.systemPrompt(platform, state.brand);
+    if (improvements && improvements.length > 0) {
+      systemPrompt += `\n\nPREVIOUS PERFORMANCE LEARNINGS FOR THIS BRAND:\n${improvements.map(i => '• ' + i).join('\n')}\nIncorporate these insights into your recommendations.`;
+    }
+
+    const response = await callGemini(systemPrompt, state.conversation);
+    typingEl.remove();
+
+    addMessage('ai', response, true);
+    state.conversation.push({ role: 'model', content: response });
+
+    // Auto-save learnings from analyst
+    if (state.currentSpecialist.id === 'analyst' && response.includes('KEY LEARNINGS')) {
+      saveImprovement(response);
+    }
+  } catch (e) {
+    typingEl.remove();
+    addMessage('ai', `⚠️ Error: ${e.message}\n\nPlease check your API key in Settings and try again.`);
+  }
+
+  sendBtn.disabled = false;
+}
+
+// ══════════════════════════════════════════════
+//  GEMINI API
+// ══════════════════════════════════════════════
+async function callGemini(systemPrompt, conversation) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${state.apiKey}`;
+
+  const contents = conversation.map(m => ({
+    role: m.role,
+    parts: [{ text: m.content }]
+  }));
+
+  const body = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents,
+    generationConfig: { temperature: 0.8, maxOutputTokens: 1500 }
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || `API error ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
+}
+
+// ══════════════════════════════════════════════
+//  MESSAGE RENDERING
+// ══════════════════════════════════════════════
+function addMessage(role, text, showCopy = false) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  const formatted = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code>$1</code>');
+
+  let html = `<div class="message-bubble">${formatted}</div>`;
+
+  if (showCopy && role === 'ai') {
+    html += `<div class="copy-row">
+      <button class="copy-btn" onclick="copyText(this, \`${escapeBacktick(text)}\`)">📋 Copy</button>
+      <button class="copy-btn" onclick="copyText(this, \`${escapeBacktick(text)}\`)">📤 Share</button>
+    </div>`;
+  }
+
+  div.innerHTML = html;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'message ai';
+  div.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy', 2000);
+  });
+}
+
+function escapeBacktick(str) {
+  return str.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  if (id === 'chat') {
+    el.style.display = 'flex';
+  }
+}
+
+function goBack() {
+  showScreen('main');
+  document.getElementById('chat').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('settings-api-key').value = state.apiKey;
+  document.getElementById('settings-brand-name').value = state.brand.name;
+  document.getElementById('settings-brand-desc').value = state.brand.desc;
+  document.getElementById('settings-audience').value = state.brand.audience;
+  document.getElementById('settings-tone').value = state.brand.tone;
+  document.getElementById('settings-goal').value = state.brand.goal;
+  document.getElementById('settings-panel').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-panel').classList.remove('open');
+}
+
+function closeSettingsOutside(e) {
+  if (e.target === document.getElementById('settings-panel')) closeSettings();
+}
+
+function saveSettings() {
+  state.apiKey = document.getElementById('settings-api-key').value.trim() || state.apiKey;
+  state.brand.name = document.getElementById('settings-brand-name').value.trim() || state.brand.name;
+  state.brand.desc = document.getElementById('settings-brand-desc').value.trim() || state.brand.desc;
+  state.brand.audience = document.getElementById('settings-audience').value.trim() || state.brand.audience;
+  state.brand.tone = document.getElementById('settings-tone').value || state.brand.tone;
+  state.brand.goal = document.getElementById('settings-goal').value || state.brand.goal;
+  document.getElementById('brand-tag').textContent = state.brand.name;
+  closeSettings();
+}
+
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+</script>
+</body>
+</html>
